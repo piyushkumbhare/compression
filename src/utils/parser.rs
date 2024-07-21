@@ -1,5 +1,5 @@
 use regex::Regex;
-use sscanf::sscanf;
+
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
 pub enum Token {
@@ -12,6 +12,7 @@ pub struct Tokens(pub Vec<Token>);
 
 impl Tokens {
 
+    #[allow(dead_code)]
     // Takes a raw uncompressed (pre-BWT) string and parses it into Tokens.
     // Also appends a delim to the end.
     pub fn from_string(string: &str) -> Self {

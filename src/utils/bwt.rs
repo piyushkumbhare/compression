@@ -49,6 +49,7 @@ impl BWT {
         }).collect()
     }
     
+    // Enumerates duplicates within a Vec, count starting at 0
     fn enumdup<T>(v: Vec<T>) -> Vec<(T, usize)>
     where
         T: Eq + Hash + Clone,
