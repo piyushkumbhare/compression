@@ -25,7 +25,7 @@ impl BWT {
                 delim_pos = i;
             }
         }
-        encoded_string.insert_str(0, format!("({})", BWT::format_radix(delim_pos as u32, 36)).as_str());
+        encoded_string.insert_str(0, format!("{}|", BWT::format_radix(delim_pos as u32, 36)).as_str());
         encoded_string
     }
     
