@@ -25,10 +25,10 @@ impl Tokens {
 
     // Parses a post-BWT string back into Tokens
     pub fn from_bwt(string: &str) -> Self {
-        let re = Regex::new(r"\((\d+)\)([\w\W\n]*)").unwrap();
+        let re = Regex::new(r"\((\w+)\)([\w\W\n]*)").unwrap();
         let captures = re.captures(string).unwrap();
 
-        let delim_pos: usize = usize::from_str_radix(&captures[1], 10).unwrap();
+        let delim_pos: usize = usize::from_str_radix(&captures[1], 36).unwrap();
         let string = &captures[2];
 
         let mut tokens: Vec<Token> = string.chars().map(|c| Token::Char(c)).collect();

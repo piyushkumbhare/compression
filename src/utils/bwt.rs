@@ -7,10 +7,15 @@ pub struct BWT;
 impl BWT {
     pub fn encode(s: &str) -> String {
         // Create Suffix Array
+        println!("Suffix Array starting");
+
         let mut sa: Vec<(usize, &str)> = (0..s.len()).map(|i| s.get(i..).unwrap()).enumerate().collect();
         sa.sort_by_key(|f| f.1);
         let mut sa: Vec<usize> = sa.into_iter().map(|f| f.0).collect();
         sa.insert(0, s.len());
+
+        println!("Suffix Array completed");
+        
         let mut delim_pos: usize = 0;
         let mut encoded_string = String::new();
         for (i, pos) in sa.iter().enumerate() {
@@ -20,7 +25,7 @@ impl BWT {
                 delim_pos = i;
             }
         }
-        encoded_string.insert_str(0, format!("({delim_pos})").as_str());
+        encoded_string.insert_str(0, format!("({})", BWT::format_radix(delim_pos as u32, 36)).as_str());
         encoded_string
     }
     
@@ -66,6 +71,22 @@ impl BWT {
                 (f, count)
             })
             .collect()
+    }
+    
+    fn format_radix(mut x: u32, radix: u32) -> String {
+        let mut result = vec![];
+    
+        loop {
+            let m = x % radix;
+            x = x / radix;
+    
+            // will panic if you use a bad radix (< 2 or > 36).
+            result.push(std::char::from_digit(m, radix).unwrap());
+            if x == 0 {
+                break;
+            }
+        }
+        result.into_iter().rev().collect()
     }
     
 }

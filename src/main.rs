@@ -9,7 +9,9 @@ fn main() {
     let mut infile = File::open(path).unwrap();
     infile.read_to_string(&mut buf).unwrap();
 
+    println!("Encoding string");
     let bwt = BWT::encode(&buf);
+    println!("Encoding finished");
 
     let mut outfile = File::create(format!("bwt-{}", path)).unwrap();
     outfile.write_all(&bwt.as_bytes()).unwrap();
