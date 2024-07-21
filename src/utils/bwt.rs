@@ -7,20 +7,18 @@ pub struct BWT;
 impl BWT {
     pub fn encode(s: &str) -> String {
         // Create Suffix Array
-        println!("Suffix Array starting");
-
         let mut sa: Vec<(usize, &str)> = (0..s.len()).map(|i| s.get(i..).unwrap()).enumerate().collect();
         sa.sort_by_key(|f| f.1);
         let mut sa: Vec<usize> = sa.into_iter().map(|f| f.0).collect();
         sa.insert(0, s.len());
 
-        println!("Suffix Array completed");
         
         let mut delim_pos: usize = 0;
         let mut encoded_string = String::new();
+        let chars: Vec<char> = s.chars().collect();
         for (i, pos) in sa.iter().enumerate() {
             if *pos > 0 {
-                encoded_string.push(s.chars().nth(pos - 1).unwrap());
+                encoded_string.push(chars[pos - 1]);
             } else {
                 delim_pos = i;
             }
