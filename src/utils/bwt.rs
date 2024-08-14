@@ -33,7 +33,7 @@ pub fn encode(s: &str) -> String {
 // Decode a BWT string back into a regular string
 pub fn decode(s: &str) -> String {
     let mut sorted = enumdup(bwt_to_tokens(s).0);
-    let unsorted = enumdup(bwt_to_tokens(s).0);
+    let unsorted = sorted.clone();
     sorted.sort_by_key(|f| f.0.clone());
 
     let mut map: HashMap<(Token, usize), (Token, usize)> = HashMap::new();
@@ -75,6 +75,7 @@ fn bwt_to_tokens(string: &str) -> Tokens {
 	let delim_pos: usize = usize::from_str_radix(&captures[1], 36).unwrap();
 	let string = &captures[2];
 
+    println!("Delim Positon {} -> {delim_pos}", &captures[1]);
 	let mut tokens: Vec<Token> = string.chars().map(|c| Token::Char(c)).collect();
 	tokens.insert(delim_pos, Token::Delim);
 	Tokens(tokens)

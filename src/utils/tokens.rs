@@ -1,5 +1,13 @@
 use std::fmt::{Debug, Write};
 
+/*
+    THIS IS CURRENTLY AN UNUSED FILE IN THIS PROJECT. 
+    
+    It may see some use in the future, but honestly 
+    it was just created so I could get some practice with
+    writing some Impl blocks.
+*/
+
 #[derive(Debug)]
 pub enum Token {
     Char(char),

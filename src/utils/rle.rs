@@ -1,14 +1,34 @@
 use std::{char, collections::HashMap, fmt::Display, usize};
 
-use crate::utils::utils::format_radix;
+use crate::utils::utils::{format_radix, get_least_used_char, MIN_ASCII, MAX_ASCII};
 
-#[derive(Debug, Clone)]
-pub struct RLE(pub String);
+/*
+    This is the Run Length Encoding (RLE) module.
 
-const MAX_COUNT: usize = 5;
+    Quite simply put, it replaces repeated consecutive characters with a count+char string
 
-const MAX_ASCII: u32 = 126;
-const MIN_ASCII: u32 = 33;
+    A naiive approach to this algorithm may replace the string "boooook" with "b5ok", which can
+    be decompressed correctly. However, a string like "b00000k" will become "b50k", which would be
+    decompressed to "b000000000000000000000...k".
+
+    My solution to this uses a delimeter approach, where each repeated sequence of characters will
+    be replaced with (DELIM)(NUM)(CHAR). This way, I can code a parser to watch out for these (DELIM)
+    characters, so it knows when to decompress a character and when to ignore it.
+
+    To go a step further, instead of using a backslash '\', my code does an initial scan of the text to
+    find the least used ASCII character and use IT as a delimeter to minimize the number of delimeter
+    escapes needed. When I say "least used", an unused ASCII char is always chosen over a char with a 
+    non-zero count. And the reason I limit to ASCII chars and not UTF-8 is simply because ASCII is limited
+    to 1 byte.
+
+*/
+
+// Upper & lower bounds for number of consecutive characters that induce an RLE replacement
+// Lower bound = 4 because aaaa -> (DELIM)4a    4 bytes -> 3 bytes. Saves at least 1 byte
+const MIN_REPEAT_COUNT: usize = 4;
+// Upper bound = 36 because count is encoded as a usize in base-36
+const MAX_REPEAT_COUNT: usize = 36;
+
 
 pub fn encode(s: &str) -> String {
     let mut count: usize = 1;
@@ -21,10 +41,10 @@ pub fn encode(s: &str) -> String {
     while let Some(curr) = chars.next() {
         match chars.peek() {
             Some(&next) => {
-                if next != curr {
-                    if count > MAX_COUNT {
+                if next != curr || count >= MAX_REPEAT_COUNT {
+                    if MIN_REPEAT_COUNT < count {
                         encoded_string.push_str(
-                            format!("{delim}{},{curr}", format_radix(count as u32, 36)).as_str(),
+                            format!("{delim}{}{curr}", format_radix(count as u32 - 1, 36)).as_str(),
                         );
                     } else {
                         encoded_string.push_str(curr.to_string().repeat(count).as_str());
@@ -35,9 +55,9 @@ pub fn encode(s: &str) -> String {
                 }
             }
             None => {
-                if count > MAX_COUNT {
+                if MIN_REPEAT_COUNT < count {
                     encoded_string.push_str(
-                        format!("{delim}{},{curr}", format_radix(count as u32, 36)).as_str(),
+                        format!("{delim}{}{curr}", format_radix(count as u32 - 1, 36)).as_str(),
                     );
                 } else {
                     encoded_string.push_str(curr.to_string().repeat(count).as_str());
@@ -49,16 +69,12 @@ pub fn encode(s: &str) -> String {
     encoded_string
 }
 
-pub fn decode(s: &str) -> Option<String> {
-    let Some(delim) = s.chars().nth(0) else {
-        return None;
-    };
 
-    let Some(s) = s.get(1..) else {
-        return None;
-    };
 
-    println!("Delim: ({delim}), String: {s}");
+pub fn decode(s: &str) -> String {
+    // TODO: get rid of these unwraps and make the whole compression chain safe
+    let delim = s.chars().nth(0).unwrap();
+    let s = s.get(1..).unwrap();
 
     let mut decoded_string = String::new();
 
@@ -69,16 +85,8 @@ pub fn decode(s: &str) -> Option<String> {
                 decoded_string.push(next);
             }
         } else if c == delim {
-            let mut count_str = String::new();
-            while let Some(count_char) = chars.next() {
-                if count_char != ',' {
-                    count_str.push(count_char);
-                } else {
-                    break;
-                }
-            }
-            println!("Count: {count_str}");
-            let count = usize::from_str_radix(&count_str, 36).unwrap();
+            let count_str = chars.next().unwrap().to_string();
+            let count = usize::from_str_radix(&count_str, 36).unwrap() + 1;
             let char_to_repeat = chars.next().unwrap();
             decoded_string.push_str(char_to_repeat.to_string().repeat(count).as_str());
         } else {
@@ -86,37 +94,14 @@ pub fn decode(s: &str) -> Option<String> {
         }
     }
 
-    Some(decoded_string)
+    decoded_string
 }
 
-fn get_least_used_char(s: &str) -> char {
-    let mut map: HashMap<char, usize> = HashMap::new();
-
-    for num in MIN_ASCII..=MAX_ASCII {
-        if let Some(c) = char::from_u32(num) {
-            map.insert(c, 0);
-        }
-    }
-
-    s.chars().for_each(|c| {
-        map.entry(c).and_modify(|v| *v += 1).or_insert(1);
-    });
-
-    map.iter()
-        .filter(|(&k, _v)| k as u32 >= MIN_ASCII && k as u32 <= MAX_ASCII)
-        .min_by_key(|x| x.1)
-        .unwrap_or((&'\\', &0))
-        .0
-        .to_owned()
-}
-
-impl Display for RLE {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0.as_str())
-    }
-}
 
 /*
+    MY NOTES ON THE TOPIC:
+
+    
     Naive Idea:
         Direct replace repeated chars with usizechar
     Examples:
@@ -140,4 +125,12 @@ impl Display for RLE {
         ,,,, ,,,, aa -> 4,,   4,,   aa -> original		Saves -2 bytes, still consistent
                   bb -> 10,  bb							Saves 6 bytes, still consistent
 
+
+    NEW IDEA:
+        Use only THREE characters per repeated sequence by replacing all repeates occurences with:
+            (DELIM)(NUM)(CHAR)
+            catdadaaaabobby -> catdad(DELIM)4abobby
+        Write NUM as a single digit in base-36. This saves space at the cost of max repeat length
+        If we read a RL of more than 36 characters, just max out each replacement at 36.
+            aaaaa (40 a's) -> (DELIM)za(DELIM)4a        40 -> 6 bytes, still good compression.
 */
