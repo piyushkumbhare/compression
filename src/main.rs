@@ -42,7 +42,7 @@ fn main() {
     infile.read_to_string(&mut buf).unwrap();
 
     let pipeline = vec![Encoders::BWT, Encoders::RLE];
-    let (compress, decompress) = pipeline!(BWT, MTF);
+    let (compress, decompress) = pipeline!(MTF);
 
     let output = compress::execute_pipeline(&buf, &compress);
 
