@@ -6,7 +6,7 @@ use std::{collections::HashMap, hash::Hash};
     Everything here is documented with a breif description of what it does.
 */
 
-// Enumerates duplicates within a Vec, count starting at 0
+/// Enumerates duplicates within a Vec, count starting at 0
 pub fn enumdup<T>(v: Vec<T>) -> Vec<(T, usize)>
 where
     T: Eq + Hash + Clone,
@@ -25,7 +25,7 @@ where
         .collect()
 }
 
-// Helper function to convert a u32 in base-10 to a different base (usually base-36)
+/// Helper function to convert a u32 in base-10 to a different base (usually base-36)
 pub fn format_radix(mut x: u32, radix: u32) -> String {
     let mut result = vec![];
 
@@ -42,11 +42,12 @@ pub fn format_radix(mut x: u32, radix: u32) -> String {
     result.into_iter().rev().collect()
 }
 
-// Corresponding u32 values for the min & max ASCII values used in RLE.
+/// Max u32 ASCII value used in RLE.
 pub const MAX_ASCII: u32 = 126;
+/// Min u32 ASCII value used in RLE.
 pub const MIN_ASCII: u32 = 33;
 
-// Retrieves the least used character in a string. An unused character will be returned if possible.
+/// Retrieves the least used character in a string. An unused character will be returned if possible.
 pub fn get_least_used_char(s: &str) -> char {
     let mut map: HashMap<char, usize> = HashMap::new();
 

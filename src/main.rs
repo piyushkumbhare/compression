@@ -5,11 +5,7 @@ use std::{
     io::{Read, Write},
 };
 mod utils;
-use compress::Encoders;
-use utils::{
-    bwt, compress, mtf, rle,
-    tokens::{Token, Tokens},
-};
+use utils::{compress, encoder_trait::Encoder};
 
 /*
     In case anyone starts reading the code from here, I suggest you read each of
@@ -22,13 +18,22 @@ use utils::{
         - utils.rs
 
     If you're still curious on what goes on in this main function, all that's happening is:
-    
+
         1. I read in a file with a given path and store it in a String variable
         2. I use the pipeline!() macro to create the compress & decompress pipelines (see compress.rs)
         3. I pass the String into this pipeline and track compression rate via .len()
         4. I decompress the string and assert that the decompressed string matches the original string.
 
     Really nothing special...
+*/
+
+/*
+    TODO:
+        1. Revert each compression file back to being a struct
+        2. Create a trait `Encoder` which requires fn encode(&str) -> String and fn decode(&str) -> String
+        3. Modify the pipeline!() macro to then accept Struct names rather than Enums.
+            These structs should satisfy the Encoder trait.
+
 */
 
 fn main() {
@@ -41,10 +46,9 @@ fn main() {
     let mut infile = File::open(path).unwrap();
     infile.read_to_string(&mut buf).unwrap();
 
-    let pipeline = vec![Encoders::BWT, Encoders::RLE];
-    let (compress, decompress) = pipeline!(MTF);
+    let pipeline = create_pipeline!(BWT, RLE);
 
-    let output = compress::execute_pipeline(&buf, &compress);
+    let output = pipeline.compress(&buf);
 
     let percent = (1.0 - output.len() as f32 / buf.len() as f32) * 100.0;
     println!(
@@ -57,7 +61,7 @@ fn main() {
     let mut outfile = File::create(format!("{}.pkzip", pathname)).unwrap();
     outfile.write_all(&output.as_bytes());
 
-    let decoded_string = compress::execute_pipeline(&output, &decompress);
+    let decoded_string = pipeline.decompress(&output);
 
     let mut decoded_file = File::create(format!("decoded-{path}")).unwrap();
     decoded_file.write_all(decoded_string.as_bytes());
@@ -68,4 +72,3 @@ fn main() {
         println!("Decoded file & original file differ...");
     }
 }
-
